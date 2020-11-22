@@ -1,0 +1,14 @@
+[influxdb]
+host = "iot.lan"
+port = 8086
+user = "solaredge"
+password = "your password"
+dbname = "db name"
+measurement = "pv"
+
+[solaredge]
+api_key = "api key"
+site_id = 123
+
+[deamon]
+sleep = 15 # sleep time in minutes
