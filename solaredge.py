@@ -25,8 +25,11 @@ class Api:
         values =  r.json()['powerDateValuesList']['siteEnergyList'][0]['powerDataValueSeries']['values']
 
 
+        result = []
+
         for value in values :
-            value['date'] = dateutil.parser.isoparse(value['date'])
-            if value['value'] == None:
-                value['value'] = 0
-        return values
+            if value['value'] != None:
+                date = dateutil.parser.isoparse(value['date'])
+                result.append({'date': date, 'value': value['value']})
+
+        return result
