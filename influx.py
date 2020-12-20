@@ -19,18 +19,20 @@ class InfluxDb:
         last_update = select.raw['series'][0]['values'][0][0]
         return dateutil.parser.isoparse(last_update)
        
-    def write_power(self, points) :
+    def write(self, points) :
         out = []
 
-        for power in points :
+        for date in points :
             point = {
                 "measurement": self.measurement,
                 "tags": self.tags,
-                "time": power['date'],
-                "fields": {
-                    "power": float(power['value'])
-                }
+                "time": date,
             }
+
+            point['fields'] = points[date]
+
             out.append(point)
 
+        import pprint
+        pprint.pprint(out)
         self._influxdb.write_points(out)

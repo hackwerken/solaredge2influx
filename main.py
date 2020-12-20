@@ -16,19 +16,28 @@ parser.add_argument('-f', metavar='config file', required=True, type=str)
 
 
 def send(solaredge_api, influxdb):
-    end_time = datetime.now()
+    end_time = datetime.now().replace(hour=23, minute=59, second=59)
 
     last_update = influxdb.get_last_update()
+    start_time = None
     if(last_update is None) :
         print('DB empty, queuring one month.')
         start_time = end_time - relativedelta(months = 1)
     else :
         start_time = last_update
 
-    powerdata = solaredge_api.get_power(start_time, end_time)
-    influxdb.write_power(powerdata)
+    data = solaredge_api.get_combined(start_time, end_time)
 
-    print('Wrote', len(powerdata), 'entries, Start time', start_time, ', End time', datetime.now())
+    result = {}
+
+    for date in data :
+        if date >= start_time.replace(tzinfo=None):
+            result[date] = data[date]
+
+    if len(result) > 0 :
+        influxdb.write(result)
+        
+    print('Wrote', len(result), 'entries, Start time', start_time, ', End time', end_time)
 
 def main():
 
@@ -50,11 +59,10 @@ def main():
         influx_config['password'], 
         influx_config['dbname'], 
         influx_config['measurement'],
-        {id: str(site_id)})
+        {'id': str(site_id)})
 
     
     solaredge_api = solaredge.Api(api_key, site_id)
-
 
     while True:
         try :
