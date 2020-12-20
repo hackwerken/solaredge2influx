@@ -33,6 +33,4 @@ class InfluxDb:
 
             out.append(point)
 
-        import pprint
-        pprint.pprint(out)
         self._influxdb.write_points(out)
