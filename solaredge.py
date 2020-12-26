@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import requests
-import  dateutil.parser
+import dateutil.parser
+import dateutil.tz
 from datetime import datetime
 
 datetime_format = '%Y-%m-%d %H:%M:%S'
@@ -21,12 +22,17 @@ class Api:
         r.raise_for_status()
         return r
 
+    def _parse_date(self, input) :
+        date = dateutil.parser.isoparse(input)
+        return date.replace(tzinfo = dateutil.tz.tzlocal())
+
+    def _format_datetime(self, dt, format) :
+        return dt.astimezone(dateutil.tz.tzlocal()).strftime(format)
 
     def get_power(self, start_time, end_time) :
-
         params = {
-            'startTime': start_time.strftime(datetime_format),
-            'endTime': end_time.strftime(datetime_format)
+            'startTime': self._format_datetime(start_time, datetime_format),
+            'endTime': self._format_datetime(end_time, datetime_format)
         }
 
         r = self._get('power', params)
@@ -37,15 +43,15 @@ class Api:
 
         for value in values :
             if value['value'] != None:
-                date = dateutil.parser.isoparse(value['date'])
+                date = self._parse_date(value['date'])
                 result[date] = value['value']
 
         return result
 
     def get_energy(self, start_time, end_time) :
         params = {
-            'startDate': start_time.strftime(date_format),
-            'endDate': end_time.strftime(date_format),
+            'startDate': self._format_datetime(start_time, date_format),
+            'endDate': self._format_datetime(end_time, date_format),
             'timeUnit': 'QUARTER_OF_AN_HOUR'
         }
 
@@ -58,11 +64,10 @@ class Api:
 
         for value in values :
             if value['value'] != None:
-                date = dateutil.parser.isoparse(value['date'])
+                date = self._parse_date(value['date'])
                 result[date] = value['value']
 
         return result
-
 
     def _merge(self, source, destination, name) :
         
@@ -74,9 +79,6 @@ class Api:
             else :
                 destination[key] = {name : value}
 
- 
-
-
     def get_combined(self, start_time, end_time) :
         power = self.get_power(start_time, end_time)
         energy = self.get_energy(start_time, end_time)
@@ -85,7 +87,7 @@ class Api:
         combined = {}
         self._merge(energy, combined, 'energy')
         self._merge(power, combined, 'power')
-       
+
         return combined
 
 

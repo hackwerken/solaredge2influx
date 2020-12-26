@@ -7,6 +7,7 @@ import toml
 import argparse
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import dateutil.tz
 from requests import HTTPError
 import time
 
@@ -16,7 +17,7 @@ parser.add_argument('-f', metavar='config file', required=True, type=str)
 
 
 def send(solaredge_api, influxdb):
-    end_time = datetime.now().replace(hour=23, minute=59, second=59)
+    end_time = datetime.now(dateutil.tz.tzlocal())
 
     last_update = influxdb.get_last_update()
     start_time = None
@@ -31,12 +32,12 @@ def send(solaredge_api, influxdb):
     result = {}
 
     for date in data :
-        if date >= start_time.replace(tzinfo=None):
+        if date >= start_time :
             result[date] = data[date]
 
     if len(result) > 0 :
         influxdb.write(result)
-        
+    
     print('Wrote', len(result), 'entries, Start time', start_time, ', End time', end_time)
 
 def main():
